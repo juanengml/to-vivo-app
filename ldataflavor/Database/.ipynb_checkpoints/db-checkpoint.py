@@ -12,7 +12,13 @@ apiToken = "tok_d096d530e9374df481ffbe966dfdbd44"
 
 my_voiceit = VoiceIt2(apiKey,apiToken)
 
-db = dataset.connect('sqlite:///tovivo.db')
+try:
+    import os 
+    ENDPOINT_DB = os.getenv('ENDPOINT_DB')
+    db = dataset.connect('mysql://dbmasteruser:#:^-GO0`S}gEkXBACEa?-jpsrmd!v-ZQ@ls-a8a4923299900c6a043fb1f426425342ab9010a9.cx8982sx1pw5.us-east-1.rds.amazonaws.com/TOvivo')
+  
+except:
+    db = dataset.connect('sqlite:///tovivo.db')
 
 class CRUD:
     

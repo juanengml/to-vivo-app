@@ -18,6 +18,7 @@ RUN aws configure set aws_secret_access_key AWS_SECRETE_KEY
 RUN aws configure set region us-east-1
 RUN aws configure set format json
 
+
 EXPOSE 5003
 
 CMD python3.6 ./api.py
