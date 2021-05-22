@@ -12,6 +12,7 @@ from random import choice
 from uuid import uuid4 
 import cvlib 
 from cvlib.object_detection import draw_bbox
+from ldataflavor.Database.db import CRUD, Verificacao
 
 console = Console()
 
@@ -62,28 +63,36 @@ def transcribe_file(job_name, file_uri, transcribe_client):
 class ProvaDeVida(object):
     
     @staticmethod
-    def facial(url): # s3 data
+    def facial(cpf,url): # s3 data
          # --------
          id_user = url.split("users")[1].split('/')[1]
          my_voiceit = VoiceIt2(apiKey,apiToken)
          r = my_voiceit.face_verification_by_url(id_user, url)
-         return {"facial": "aprovado" } if r['faceConfidence'] > 95 else {"facial":"reprovado"}
-    
+         status =  {"facial": "aprovado" } if r['faceConfidence'] > 95 else {"facial":"reprovado"}
+         status['cpf'] = cpf
+         result = CRUD.update(status)
+         return status 
+        
     @staticmethod
-    def vocal(url): # s3 data ## TESTADO !
+    def vocal(cpf,url): # s3 data ## TESTADO !
         frase = 'Abóbora enquadrada roxa, laranja azul.' # fazer busca em um banco de dados
         transcribe_client = boto3.client('transcribe')
         file_uri = "s3://to-vivo-app/users/"+url.split("users/")[1]
         text = transcribe_file('Example-job'+str(uuid4()), file_uri, transcribe_client)
-        if text == frase:
-            return {"vocal":"aprovado"}
-        return {"vocal":"reprovado"}
+        status = {"vocal":"aprovado"} if text == frase else {"vocal":"reprovado"}      
+        status['cpf'] = cpf
+        result = CRUD.update(status)
+        return status
         
     
     @staticmethod
-    def pose(url):
+    def pose(cpf,url):
         id_user = url.split("users")[1].split('/')[1] # https://to-vivo-app.s3.amazonaws.com/users/usr_54fbb7f880214222958ce92aef0f22f2/renato_corpo_inteiro.jpg
-        return pose_estimation(url,True)
+        status =  pose_estimation(url,True)
+        status['cpf'] = cpf
+        result = CRUD.update(status)
+        
+        return status
 
 def color():
     cor = list(range(255))

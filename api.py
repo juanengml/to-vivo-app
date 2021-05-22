@@ -14,8 +14,9 @@ console = Console()
 
 app = Flask(__name__)
 api = Api(app)
-CORS(app, origins="*", allow_headers=[
-    "Content-Type", "Authorization", "Access-Control-Allow-Credentials"])
+#CORS(app, origins="*", allow_headers=[
+#    "Content-Type", "Authorization", "Access-Control-Allow-Credentials"])
+CORS(app)
 
 
 class verificacao(Resource):
@@ -23,7 +24,8 @@ class verificacao(Resource):
     def post(self):
         argumentos = reqparse.RequestParser()
         argumentos.add_argument('url') 
-        argumentos.add_argument('tipo')  
+        argumentos.add_argument('tipo')          
+        argumentos.add_argument('cpf')  
         dados  = argumentos.parse_args()
         check = None
         if dados['tipo'] == 'facial':
@@ -109,7 +111,7 @@ class show_db(Resource):
     
 class healthcheck(Resource):
     def get(self):
-        return {"healthcheck":"WORK"}
+        return {"healthcheck":"WORK"},200
 
 api.add_resource(verificacao, '/api/v1/verificacao/')
 
@@ -124,4 +126,4 @@ api.add_resource(upload_image, '/api/v1/upload/image')
 api.add_resource(upload_audio, '/api/v1/upload/audio')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0",port=5003,debug=True)
+    app.run(host="0.0.0.0",port=5004,debug=True)
