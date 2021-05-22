@@ -1,21 +1,21 @@
 import dataset
 from voiceit2 import VoiceIt2
+
 from console_logging.console import Console
+import os
 console = Console()
 
 console.log("Stating....")
 
-# developerId : ff4a62e3f7014748b75085b17dde1f01
 
-apiKey = "key_aaf0da565b3b41ac8f6de78213f93e52"
-apiToken = "tok_d096d530e9374df481ffbe966dfdbd44"
+apiKey = os.getenv("API_KEY") 
+apiToken = os.getenv("API_TOKEN") 
 
 my_voiceit = VoiceIt2(apiKey,apiToken)
 
-try:
-    import os 
+try: 
     ENDPOINT_DB = os.getenv('ENDPOINT_DB')
-    db = dataset.connect('mysql://dbmasteruser:#:^-GO0`S}gEkXBACEa?-jpsrmd!v-ZQ@ls-a8a4923299900c6a043fb1f426425342ab9010a9.cx8982sx1pw5.us-east-1.rds.amazonaws.com/TOvivo')
+    db = dataset.connect(ENDPOINT_DB)
   
 except:
     db = dataset.connect('sqlite:///tovivo.db')
