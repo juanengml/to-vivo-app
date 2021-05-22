@@ -7,7 +7,6 @@ console = Console()
 
 console.log("Stating....")
 
-# developerId : ff4a62e3f7014748b75085b17dde1f01
 
 apiKey = os.getenv("API_KEY") 
 apiToken = os.getenv("API_TOKEN") 
