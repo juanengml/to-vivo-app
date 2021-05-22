@@ -23,7 +23,8 @@ make deploy-prod
 ```bash
 foo $ make deploy-prod 
 
-ENDPOINT http://192.168.0.10:8080/
+ENDPOINT http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/
+
 ```
 
 ## PARA DOCUMENTAÇÃO SOBRE A API e seu USO
