@@ -16,7 +16,9 @@ def upload_file(user,file_name,tipo):
     if tipo == 'image':
         object_name = "users/"+user+"/"+file_name
         print(object_name)
-    
+    if tipo == "voz":
+        object_name = "users/"+user+"/"+file_name
+        print(object_name)
 
     # Upload the file
     bucket = 'to-vivo-app'

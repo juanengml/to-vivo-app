@@ -27,6 +27,14 @@ ENDPOINT http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/
 
 ```
 
+```bash
+foo $ streamlit run interface.py  --server.port 5004
+ 
+
+ENDPOINT http://ec2-3-238-49-213.compute-1.amazonaws.com:5004/
+
+```
+
 ## PARA DOCUMENTAÇÃO SOBRE A API e seu USO
 
 ## Cadastro de usuario

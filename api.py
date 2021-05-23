@@ -29,11 +29,11 @@ class verificacao(Resource):
         dados  = argumentos.parse_args()
         check = None
         if dados['tipo'] == 'facial':
-            check = ProvaDeVida.facial(dados['url'])
+            check = ProvaDeVida.facial(dados['cpf'], dados['url'])
         if dados['tipo'] == 'vocal':
-            check = ProvaDeVida.vocal(dados['url'])
+            check = ProvaDeVida.vocal(dados['cpf'], dados['url'])
         if dados['tipo'] == 'pose':
-            check = ProvaDeVida.pose(dados['url'])
+            check = ProvaDeVida.pose(dados['cpf'], dados['url'])
             
         return {"dados":dados,"check":check}
     
@@ -126,4 +126,4 @@ api.add_resource(upload_image, '/api/v1/upload/image')
 api.add_resource(upload_audio, '/api/v1/upload/audio')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0",port=5004,debug=True)
+    app.run(host="0.0.0.0",port=5003,debug=True)

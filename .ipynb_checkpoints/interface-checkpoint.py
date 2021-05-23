@@ -4,11 +4,17 @@ from random import choice
 # working with sample data.
 import numpy as np
 import pandas as pd
+from PIL import Image
+    
+import cv2
 import time
 import altair as alt
 import datetime
 import streamlit.components.v1 as stc
 from requests import post,get,put 
+from pydub import AudioSegment
+from ldataflavor.Services.upload import upload_file
+from ldataflavor.Database.db import CRUD, Verificacao
 
 def status():
     return choice(range(100))
@@ -21,8 +27,12 @@ def save_image(img_file_buffer,name):
     cv2.imwrite(filename, img_array)
     return filename
 
-def save_audio(file_buffer, name):
-    pass
+def save_audio(uploaded_file_audio, name):
+    filename = "{}.wav".format(name)
+    with open("{}.wav".format(name), "wb") as f:
+           f.write(uploaded_file_audio.getbuffer())  
+
+    return filename
 
 def form():
      
@@ -59,14 +69,8 @@ def form():
 
 
 def main():
-    HTML_BANNER = """
-    <div style="background-color:#464e5f;padding:10px;border-radius:10px">
-    <h1 style="color:white;text-align:center;"> 
-         TO vivo - provando que existe vida.     </h1>
-    <p style="color:white;text-align:center;">Built with DataFlavor</p>
-    </div>"""
-    
-    stc.html(HTML_BANNER)
+    image = Image.open('banner.jpg')
+    st.image(image, caption='Construido por Data Flavor')
     
     st.write("""
     ----
@@ -75,26 +79,36 @@ def main():
     
     menu = st.sidebar.selectbox(
     "Funcionalidade",
-    ("Processo", "Acompanhar processo","Minhas informações","Prova de Vida")) 
+    ("Acompanhar processo","Prova de Vida","Minhas informações")) 
     
     #st.write(menu)
-    if menu == "Processo":
+    if menu == "Acompanhar processo":
         with st.form("process"):
             col5,col6=st.beta_columns(2)
             with col5:
-                st.write("## Digite Seu CPF por favor")
+                st.write("## Digite Seu CPF")
             with col6:
                 cpf = st.text_input('CPF')
                 
             submitted = st.form_submit_button("Buscar") 
             if submitted:
               st.write( "data", cpf)
-              endpoint_search = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5004/api/v1/user/"
+              endpoint_search = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/user/"
               data = {
-                 "cpf":"110.363.085-70"
+                 "cpf":cpf
               }
               r = get(endpoint_search,data).json()
-              st.write(r)
+              st.write("### Olá Senhor(a) ",r['nome'])   
+              if r['prova_de_vida'] == 'aprovado':
+                    st.success("Sua Prova de Vida está como \n### CONCLUÍDA 🥳" )
+                    st.balloons()
+
+              else:
+                    st.warning("Sua Prova de Vida está como \n###NÃO CONCLUIDA ☹️")
+              st.write("Data da Realização : ",r['data'])
+             
+                
+            
               
     if menu == "Prova de Vida":
         with st.form("my_form"):
@@ -103,9 +117,7 @@ def main():
                 st.write("""
                 ## Preencha com suas informações abaixo 
                 EX: (CPF) 
-                """)
-                
-                
+                """)   
 
            with col2:
                 cpf = st.text_input('CPF')
@@ -123,33 +135,75 @@ def main():
            # Every form must have a submit button.
            submitted = st.form_submit_button("Submit")
            if submitted:
-              st.write( "data", date)
-              st.write(date,uploaded_file_foto,uploaded_file_video, uploaded_file_audio)
+              
+              st.write( "cpf", cpf)
+              #st.write(date,uploaded_file_foto,uploaded_file_video, uploaded_file_audio)
+              
+              endpoint_image = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/upload/image"
+
+                      # -------------------------------------------------
+                      # valida face regontion 
+              path_face = save_image(uploaded_file_foto ,"facial") 
+
+              files = {'files': open(path_face,'rb')}                      
+              data = {"cpf":cpf,"tipo":"facial","operacao":"check"}                    
+                    
+              data_face = post(url=endpoint_image,data=data,files=files).json()
+              data_face['cpf'] = cpf  
+              #st.write("data_face",data_face)  
+                      # -------------------------------------------  
+                      ## valida pose estimation    
+              path_pose = save_image(uploaded_file_video,"pose")
+                      
+              files = {'files': open(path_pose,'rb')}
+              data = {"cpf":cpf,"tipo":"pose","operacao":"check"}
+                    
+              data_pose = post(url=endpoint_image,data=data,files=files).json()
+              data_pose['cpf'] = cpf  
+              #st.write("data_pose",data_pose)  
+  
+                      # ----------------------------------------------  
+                      # valida audio recognition   
+              path_audio = save_audio(uploaded_file_audio,"voz")  
+              endpoint_search = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/user/"
+              data = {
+                 "cpf":cpf
+              }
+              r = get(endpoint_search,data).json()       
+              user = r['userId']  
+              link_voz = upload_file(user,path_audio,"voz")     # url do s3 
+                    
+              data_voz = {"cpf":cpf,"tipo":"vocal","url":link_voz}
+              #st.write("data_voz",data_voz)
+                      # -----------------------------------------------
+                      # verificacao 
+              endpoint_verificacao = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/verificacao/"
+              r_face = post(endpoint_verificacao,data_face).json()
+
+              if r_face['check']['facial'] == 'aprovado':
+                    st.info('Reconhecimento Facial Verificada com Sucesso !')
+                    
+              r_pose = post(endpoint_verificacao,data_pose).json()
+
+              if r_pose['check']['pose'] == 'aprovado':
+                    st.info('Reconhecimento Pose Verificada com Sucesso !')
+                    
+              r_voz = post(endpoint_verificacao,data_voz).json()
+ 
+              if r_voz['check']['vocal'] == 'aprovado':
+                    st.info('Reconhecimento Vocal Verificada com Sucesso !')
+              dados = {"cpf":cpf,'nome':r['nome'],"prova_de_vida":"aprovado","data":"05-04-2021"}  
+              result = CRUD.update(dados)
+              #st.write(result)
+                
+              st.success('Prova de Vida Verificada com Sucesso !')
               st.balloons()
-              ## enviar para api de autenticação 
-              ## enciar para s3 e rodar sagemaker para validação 
-              ## usar ec2 para hosting
+              
+                      #st.error("FALHA AO CADASTRAR DADOS ! TENTE NOVAMENTE MAIS TARDE !")  
+   
               st.write(" ")
 
-    if menu == 'Acompanhar processo':
-        col3,col4=st.beta_columns(2)
-        
-        with col3:
-           st.info("""
-        ## Status da sua prova de vida 💡
-         """ ) 
-        
-        with col4:
-           st.write("""
-        ## Status do processo [ em ANDAMENTO ]
-         """ )  
-           my_bar = st.progress(90)
-            
-        st.warning("""
-        Caso tenha passado mais de 2 horas entre contato com
-        
-        📣 +55 41 992149181 
-         """ ) 
+    
         
     if menu == "Minhas informações" :
         option = st.selectbox(
@@ -161,8 +215,7 @@ def main():
                 
              with col5:
                    nome = st.text_input('NOME COMPLETO')
-                   data_nascimento = st.date_input( "Data de Nascimento",
-                                                  datetime.date(1958, 7, 6))
+                   data_nascimento = st.date_input( "Data de Nascimento", datetime.date(1958, 7, 6))
                    inss = st.text_input("NÚMERO INSS")
                    email = st.text_input("EMAIL") 
                    
@@ -186,7 +239,6 @@ def main():
             
              if submitted:
                   st.write( "data", cpf)
-                  endpoint_search = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5004/api/v1/user/"
                   data = {
                         "nome": nome,
                         "data_nascimento": data_nascimento,
@@ -197,13 +249,37 @@ def main():
                         "email": email,
                         "senha":senha
                     } 
-                  save_image(uploaded_file_foto ,"facial")                
-                  save_image(uploaded_file_video,"pose")
-                  #save_audio(uploaded_file_audio,"voz")
-                    
-                    
+                  try:  
+                      endpoint = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/user/"
+                      r = post(endpoint,data).json()
+                      #st.write(r)
+                      path_face = save_image(uploaded_file_foto ,"facial") 
+
+                      files = {'files': open(path_face,'rb')}
+                      data = {"cpf":cpf,"tipo":"facial","operacao":"cadastro"}
+                      endpoint_image = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/upload/image"
+                      post(url=endpoint_image,data=data,files=files).json()
+
+                      path_pose = save_image(uploaded_file_video,"pose")
+                      files = {'files': open(path_pose,'rb')}
+                      data = {"cpf":cpf,"tipo":"pose","operacao":"cadastro"}
+                      endpoint_image = "http://ec2-3-238-49-213.compute-1.amazonaws.com:5003/api/v1/upload/image"
+                      post(url=endpoint_image,data=data,files=files).json()
+
+                      path_audio = save_audio(uploaded_file_audio,"voz")  
+                      user = r['userId']  
+                      link_voz = upload_file(user,path_audio,"voz")     # url do s3 
+                      dados = r  
+                      dados['link_voz'] =  link_voz
+                      result = CRUD.update(dados)
+                      st.success('Dados Cadastrados Com Sucesso !')
+                      st.balloons()
+                  except:
+                      st.error("FALHA AO CADASTRAR DADOS ! TENTE NOVAMENTE MAIS TARDE !")
+                   #st.write(result)
+                  #st.write(dados)
                   #r = get(endpoint_search,data).json()
-                  st.write(data)
+                  #st.write(data)
                 
         if option == "Não":
              ## busca por CPF
