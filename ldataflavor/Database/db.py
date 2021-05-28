@@ -8,15 +8,16 @@ console = Console()
 console.log("Stating....")
 
 
-apiKey = "key_aaf0da565b3b41ac8f6de78213f93e52" # os.getenv("API_KEY") 
-apiToken = "tok_d096d530e9374df481ffbe966dfdbd44" #os.getenv("API_TOKEN") 
+apiKey ="   " #
+apiToken = "  " 
 
 my_voiceit = VoiceIt2(apiKey,apiToken)
 
 try: 
     #ENDPOINT_DB = os.getenv('ENDPOINT_DB')
     #db = dataset.connect(ENDPOINT_DB)
-    db = dataset.connect('mysql://dbmasteruser:$ArM(R*u6TWM8[T_w]|=v|hR{nXvwU&E@ls-d3897fabf406022697bd50f2f95b05b3ee52c9f3.cx8982sx1pw5.us-east-1.rds.amazonaws.com/Heimdall_DB')
+    db = dataset.connect('sqlite:///tovivo.db')
+
 except:
     db = dataset.connect('sqlite:///tovivo.db')
 
